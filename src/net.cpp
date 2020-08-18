@@ -659,7 +659,7 @@ bool CNode::ReceiveMsgBytes(Span<const uint8_t> msg_bytes, bool& complete)
             i->second += result->m_raw_message_size;
 
             // push the message to the process queue,
-            vRecvMsg.push_back(std::move(*result));
+            m_recv_msg_most_recent = vRecvMsg.insert_after(m_recv_msg_most_recent, std::move(msg));
 
             complete = true;
         }
@@ -1577,14 +1577,18 @@ void CConnman::SocketHandler()
                 if (notify) {
                     size_t nSizeAdded = 0;
                     auto it(pnode->vRecvMsg.begin());
-                    for (; it != pnode->vRecvMsg.end(); ++it) {
+                    // it2 will hold the before end iterator.
+                    auto it2 = it;
+                    for (; it != pnode->vRecvMsg.end(); it2 = it++) {
                         // vRecvMsg contains only completed CNetMessage
                         // the single possible partially deserialized message are held by TransportDeserializer
                         nSizeAdded += it->m_raw_message_size;
                     }
                     {
                         LOCK(pnode->cs_vProcessMsg);
-                        pnode->vProcessMsg.splice(pnode->vProcessMsg.end(), pnode->vRecvMsg, pnode->vRecvMsg.begin(), it);
+                        pnode->vProcessMsg.splice_after(pnode->m_process_msg_most_recent, pnode->vRecvMsg, pnode->vRecvMsg.begin(), it);
+                        pnode->m_process_msg_most_recent = it2;
+                        pnode->m_recv_msg_most_recent = pnode->vRecvMsg.before_begin();
                         pnode->nProcessQueueSize += nSizeAdded;
                         pnode->fPauseRecv = pnode->nProcessQueueSize > nReceiveFloodSize;
                     }
@@ -2973,17 +2977,25 @@ ServiceFlags CConnman::GetLocalServices() const
 
 unsigned int CConnman::GetReceiveFloodSize() const { return nReceiveFloodSize; }
 
-CNode::CNode(NodeId idIn, ServiceFlags nLocalServicesIn, SOCKET hSocketIn, const CAddress& addrIn, uint64_t nKeyedNetGroupIn, uint64_t nLocalHostNonceIn, const CAddress& addrBindIn, const std::string& addrNameIn, ConnectionType conn_type_in, bool inbound_onion)
+CNode::CNode(NodeId idIn, ServiceFlags nLocalServicesIn, int nMyStartingHeightIn, SOCKET hSocketIn, const CAddress& addrIn, uint64_t nKeyedNetGroupIn, uint64_t nLocalHostNonceIn, const CAddress& addrBindIn, const std::string& addrNameIn, bool fInboundIn, bool block_relay_only)
     : nTimeConnected(GetTimeSeconds()),
-      addr(addrIn),
-      addrBind(addrBindIn),
-      m_inbound_onion(inbound_onion),
-      nKeyedNetGroup(nKeyedNetGroupIn),
-      id(idIn),
-      nLocalHostNonce(nLocalHostNonceIn),
-      m_conn_type(conn_type_in),
-      nLocalServices(nLocalServicesIn)
+    addr(addrIn),
+    addrBind(addrBindIn),
+    fInbound(fInboundIn),
+    m_inbound_onion(inbound_onion),
+    nKeyedNetGroup(nKeyedNetGroupIn),
+    // Don't relay addr messages to peers that we connect to as block-relay-only
+    // peers (to prevent adversaries from inferring these links from addr
+    // traffic).
+    m_addr_known{block_relay_only ? nullptr : MakeUnique<CRollingBloomFilter>(5000, 0.001)},
+    id(idIn),
+    nLocalHostNonce(nLocalHostNonceIn),
+    m_conn_type(conn_type_in),
+    nLocalServices(nLocalServicesIn),
+    nMyStartingHeight(nMyStartingHeightIn)
 {
+    m_recv_msg_most_recent = vRecvMsg.before_begin();
+    m_process_msg_most_recent = vProcessMsg.before_begin();
     if (inbound_onion) assert(conn_type_in == ConnectionType::INBOUND);
     hSocket = hSocketIn;
     addrName = addrNameIn == "" ? addr.ToStringIPPort() : addrNameIn;

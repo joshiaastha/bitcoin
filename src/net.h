@@ -37,6 +37,13 @@
 #include <optional>
 #include <thread>
 #include <vector>
+#include <condition_variable>
+#include <forward_list>
+
+#ifndef WIN32
+#include <arpa/inet.h>
+#endif
+
 
 class CScheduler;
 class CNode;
@@ -942,6 +949,10 @@ public:
     unsigned int GetReceiveFloodSize() const;
 
     void WakeMessageHandler();
+    RecursiveMutex cs_vProcessMsg;
+    std::forward_list<CNetMessage> vProcessMsg GUARDED_BY(cs_vProcessMsg);
+    std::forward_list<CNetMessage>::iterator m_process_msg_most_recent GUARDED_BY(cs_vProcessMsg);
+    size_t nProcessQueueSize{0};
 
     /** Attempts to obfuscate tx time through exponentially distributed emitting.
         Works assuming that a single interval is used.
@@ -1045,6 +1056,11 @@ private:
     uint64_t nMaxOutboundTotalBytesSentInCycle GUARDED_BY(cs_totalBytesSent) {0};
     std::chrono::seconds nMaxOutboundCycleStartTime GUARDED_BY(cs_totalBytesSent) {0};
     uint64_t nMaxOutboundLimit GUARDED_BY(cs_totalBytesSent);
+    const int nMyStartingHeight;
+    int nSendVersion{0};
+    NetPermissionFlags m_permissionFlags{ PF_NONE };
+    std::forward_list<CNetMessage> vRecvMsg;  // Used only by SocketHandler thread
+    std::forward_list<CNetMessage>::iterator m_recv_msg_most_recent;
 
     // P2P timeout in seconds
     int64_t m_peer_connect_timeout;
