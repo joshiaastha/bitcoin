@@ -4046,7 +4046,7 @@ bool PeerManagerImpl::ProcessMessages(CNode* pfrom, std::atomic<bool>& interrupt
         LOCK(pfrom->cs_vProcessMsg);
         if (pfrom->vProcessMsg.empty()) return false;
         // Just take one message
-        msgs.splice_after(msgs.before_begin(), pfrom->vProcessMsg, pfrom->vProcessMsg.begin());
+        msgs.splice_after(msgs.before_begin(), pfrom->vProcessMsg, pfrom->vProcessMsg.before_begin());
         if (pfrom->vProcessMsg.empty())
             pfrom->m_process_msg_most_recent = pfrom->vProcessMsg.before_begin();
         pfrom->nProcessQueueSize -= msgs.front().m_raw_message_size;

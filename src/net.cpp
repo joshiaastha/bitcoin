@@ -659,7 +659,7 @@ bool CNode::ReceiveMsgBytes(Span<const uint8_t> msg_bytes, bool& complete)
             i->second += result->m_raw_message_size;
 
             // push the message to the process queue,
-            m_recv_msg_most_recent = vRecvMsg.insert_after(m_recv_msg_most_recent, std::move(msg));
+            m_recv_msg_most_recent = vRecvMsg.insert_after(m_recv_msg_most_recent, std::move(*result));
 
             complete = true;
         }
@@ -1586,7 +1586,7 @@ void CConnman::SocketHandler()
                     }
                     {
                         LOCK(pnode->cs_vProcessMsg);
-                        pnode->vProcessMsg.splice_after(pnode->m_process_msg_most_recent, pnode->vRecvMsg, pnode->vRecvMsg.begin(), it);
+                        pnode->vProcessMsg.splice_after(pnode->m_process_msg_most_recent, pnode->vRecvMsg, pnode->vRecvMsg.before_begin(), it);
                         pnode->m_process_msg_most_recent = it2;
                         pnode->m_recv_msg_most_recent = pnode->vRecvMsg.before_begin();
                         pnode->nProcessQueueSize += nSizeAdded;
@@ -2977,22 +2977,19 @@ ServiceFlags CConnman::GetLocalServices() const
 
 unsigned int CConnman::GetReceiveFloodSize() const { return nReceiveFloodSize; }
 
-CNode::CNode(NodeId idIn, ServiceFlags nLocalServicesIn, int nMyStartingHeightIn, SOCKET hSocketIn, const CAddress& addrIn, uint64_t nKeyedNetGroupIn, uint64_t nLocalHostNonceIn, const CAddress& addrBindIn, const std::string& addrNameIn, bool fInboundIn, bool block_relay_only)
+CNode::CNode(NodeId idIn, ServiceFlags nLocalServicesIn, SOCKET hSocketIn, const CAddress& addrIn, uint64_t nKeyedNetGroupIn, uint64_t nLocalHostNonceIn, const CAddress& addrBindIn, const std::string& addrNameIn, ConnectionType conn_type_in, bool inbound_onion)
     : nTimeConnected(GetTimeSeconds()),
     addr(addrIn),
     addrBind(addrBindIn),
-    fInbound(fInboundIn),
     m_inbound_onion(inbound_onion),
     nKeyedNetGroup(nKeyedNetGroupIn),
     // Don't relay addr messages to peers that we connect to as block-relay-only
     // peers (to prevent adversaries from inferring these links from addr
     // traffic).
-    m_addr_known{block_relay_only ? nullptr : MakeUnique<CRollingBloomFilter>(5000, 0.001)},
     id(idIn),
     nLocalHostNonce(nLocalHostNonceIn),
     m_conn_type(conn_type_in),
-    nLocalServices(nLocalServicesIn),
-    nMyStartingHeight(nMyStartingHeightIn)
+    nLocalServices(nLocalServicesIn)
 {
     m_recv_msg_most_recent = vRecvMsg.before_begin();
     m_process_msg_most_recent = vProcessMsg.before_begin();
