@@ -2,7 +2,7 @@
 
 BEGIN
 {
-  printf("Logging P2P traffic\n")
+  printf("Logging P2P traffic\n");
   @start = nsecs;
 }
 
