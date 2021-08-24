@@ -3,6 +3,7 @@
 BEGIN
 {
   printf("Logging P2P traffic\n")
+  @start = nsecs;
 }
 
 usdt:./src/bitcoind:net:inbound_message
@@ -12,7 +13,8 @@ usdt:./src/bitcoind:net:inbound_message
   $peer_type = str(arg2);
   $msg_type = str(arg3);
   $msg_len = arg4;
-  printf("inbound '%s' msg from peer %d (%s, %s) with %d bytes\n", $msg_type, $peer_id, $peer_type, $peer_addr, $msg_len);
+  $t = (nsecs - @start) / 1000;
+  printf("inbound '%s' msg from peer %d (%s, %s) with %d bytes in %d us\n", $msg_type, $peer_id, $peer_type, $peer_addr, $msg_len, $t);
 }
 
 usdt:./src/bitcoind:net:outbound_message
@@ -22,7 +24,8 @@ usdt:./src/bitcoind:net:outbound_message
   $peer_type = str(arg2);
   $msg_type = str(arg3);
   $msg_len = arg4;
+  $t = (nsecs - @start) / 1000;
 
-  printf("outbound '%s' msg to peer %d (%s, %s) with %d bytes\n", $msg_type, $peer_id, $peer_type, $peer_addr, $msg_len);
+  printf("outbound '%s' msg to peer %d (%s, %s) with %d bytes in %d us\n", $msg_type, $peer_id, $peer_type, $peer_addr, $msg_len, $t);
 }
 
