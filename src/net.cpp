@@ -1574,6 +1574,16 @@ void CConnman::SocketHandler()
                         pnode->nProcessQueueSize += nSizeAdded;
                         pnode->fPauseRecv = pnode->nProcessQueueSize > nReceiveFloodSize;
                     }
+
+                    TRACE6(net, recv_message,
+                        pnode->GetId(),
+                        pnode->GetAddrName().c_str(),
+                        pnode->ConnectionTypeAsString().c_str(),
+                        pnode->vProcessMsg.front().m_command.c_str(),
+                        pnode->vProcessMsg.front().m_recv.size(),
+                        pnode->vProcessMsg.front().m_recv.data()
+                    );
+
                     WakeMessageHandler();
                 }
             }
