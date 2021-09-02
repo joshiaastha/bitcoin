@@ -1,0 +1,31 @@
+#!/usr/bin/env bpftrace
+
+BEGIN
+{
+  printf("Logging P2P traffic\n");
+  @start = nsecs;
+}
+
+usdt:./src/bitcoind:net:inbound_message
+{
+  $peer_id = (int64) arg0;
+  $peer_addr = str(arg1);
+  $peer_type = str(arg2);
+  $msg_type = str(arg3);
+  $msg_len = arg4;
+  $t = (nsecs - @start) / 1000;
+  printf("Processed '%s' msg from peer %d (%s, %s) with %d bytes in %d us\n", $msg_type, $peer_id, $peer_type, $peer_addr, $msg_len, $t);
+}
+
+usdt:./src/bitcoind:net:recv_message
+{
+  $peer_id = (int64) arg0;
+  $peer_addr = str(arg1);
+  $peer_type = str(arg2);
+  $msg_type = str(arg3);
+  $msg_len = arg4;
+  $t = (nsecs - @start) / 1000;
+
+  printf("Received '%s' msg to peer %d (%s, %s) with %d bytes in %d us\n", $msg_type, $peer_id, $peer_type, $peer_addr, $msg_len, $t);
+}
+
