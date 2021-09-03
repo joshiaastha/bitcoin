@@ -646,15 +646,14 @@ bool CNode::ReceiveMsgBytes(Span<const uint8_t> msg_bytes, bool& complete)
             // push the message to the process queue,
             vRecvMsg.push_back(std::move(*result));
 
-            // TRACE4(net, recv_message,
-            //     // p->GetId(),
-            //     // pnode->m_addr_name.c_str(),
-            //     // pnode->ConnectionTypeAsString().c_str(),
-            //     m_deserializer->SetVersion(GetId()),
-            //     vRecvMsg.front().m_command.c_str(),
-            //     vRecvMsg.front().m_recv.size(),
-            //     vRecvMsg.front().m_recv.data()
-            // );
+            TRACE6(net, recv_message,
+                GetId(),
+                m_addr_name.c_str(),
+                ConnectionTypeAsString().c_str(),
+                vRecvMsg.front().m_command.c_str(),
+                vRecvMsg.front().m_recv.size(),
+                vRecvMsg.front().m_recv.data()
+            );
 
             complete = true;
         }
@@ -1577,14 +1576,14 @@ void CConnman::SocketHandler()
                         // vRecvMsg contains only completed CNetMessage
                         // the single possible partially deserialized message are held by TransportDeserializer
 
-                        TRACE6(net, recv_message,
-                            pnode->GetId(),
-                            pnode->m_addr_name.c_str(),
-                            pnode->ConnectionTypeAsString().c_str(),
-                            it->m_command.c_str(),
-                            it->m_recv.size(),
-                            it->m_recv.data()
-                        );
+                        // TRACE6(net, recv_message,
+                        //     pnode->GetId(),
+                        //     pnode->m_addr_name.c_str(),
+                        //     pnode->ConnectionTypeAsString().c_str(),
+                        //     it->m_command.c_str(),
+                        //     it->m_recv.size(),
+                        //     it->m_recv.data()
+                        // );
 
                         nSizeAdded += it->m_raw_message_size;
                     }
@@ -1594,16 +1593,6 @@ void CConnman::SocketHandler()
                         pnode->nProcessQueueSize += nSizeAdded;
                         pnode->fPauseRecv = pnode->nProcessQueueSize > nReceiveFloodSize;
                     }
-
-                    // TRACE6(net, recv_message,
-                    //     pnode->GetId(),
-                    //     pnode->m_addr_name.c_str(),
-                    //     pnode->ConnectionTypeAsString().c_str(),
-                    //     pnode->vProcessMsg.front().m_command.c_str(),
-                    //     pnode->vProcessMsg.front().m_recv.size(),
-                    //     pnode->vProcessMsg.front().m_recv.data()
-                    // );
-
                     WakeMessageHandler();
                 }
             }
