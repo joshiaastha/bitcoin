@@ -650,9 +650,9 @@ bool CNode::ReceiveMsgBytes(Span<const uint8_t> msg_bytes, bool& complete)
                 GetId(),
                 m_addr_name.c_str(),
                 ConnectionTypeAsString().c_str(),
-                vRecvMsg.front().m_command.c_str(),
-                vRecvMsg.front().m_recv.size(),
-                vRecvMsg.front().m_recv.data()
+                vRecvMsg.back().m_command.c_str(),
+                vRecvMsg.back().m_recv.size(),
+                vRecvMsg.back().m_recv.data()
             );
 
             complete = true;
