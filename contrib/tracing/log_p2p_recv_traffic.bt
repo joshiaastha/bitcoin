@@ -26,6 +26,6 @@ usdt:./src/bitcoind:net:recv_message
   $msg_len = arg4;
   $t = (nsecs - @start) / 1000;
 
-  printf("Received '%s' msg to peer %d (%s, %s) with %d bytes in %d us\n", $msg_type, $peer_id, $peer_type, $peer_addr, $msg_len, $t);
+  printf("Received '%s' msg from peer %d (%s, %s) with %d bytes in %d us\n", $msg_type, $peer_id, $peer_type, $peer_addr, $msg_len, $t);
 }
 
