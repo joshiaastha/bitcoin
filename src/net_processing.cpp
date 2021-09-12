@@ -2516,14 +2516,15 @@ void PeerManagerImpl::ProcessMessage(CNode& pfrom, const std::string& msg_type, 
             // disconnect from peers older than this proto version
             LogPrint(BCLog::NET, "peer=%d using obsolete version %i; disconnecting\n", pfrom.GetId(), nVersion);
             pfrom.fDisconnect = true;
+
+            TRACE3(net, disconnected,
+                pfrom.GetId(),
+                pfrom.m_addr_name.c_str(),
+                pfrom.ConnectionTypeAsString().c_str()
+            );
+
             return;
         }
-
-        TRACE3(net, disconnected,
-            pfrom.GetId(),
-            pfrom.m_addr_name.c_str(),
-            pfrom.ConnectionTypeAsString().c_str()
-        );
 
         if (!vRecv.empty()) {
             // The version message includes information about the sending node which we don't use:
