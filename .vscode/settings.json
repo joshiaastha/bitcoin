@@ -1,5 +1,8 @@
 {
     "python.analysis.extraPaths": [
         "./test/functional"
-    ]
+    ],
+    "files.associations": {
+        "optional": "cpp"
+    }
 }

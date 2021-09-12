@@ -1576,15 +1576,6 @@ void CConnman::SocketHandler()
                         // vRecvMsg contains only completed CNetMessage
                         // the single possible partially deserialized message are held by TransportDeserializer
 
-                        // TRACE6(net, recv_message,
-                        //     pnode->GetId(),
-                        //     pnode->m_addr_name.c_str(),
-                        //     pnode->ConnectionTypeAsString().c_str(),
-                        //     it->m_command.c_str(),
-                        //     it->m_recv.size(),
-                        //     it->m_recv.data()
-                        // );
-
                         nSizeAdded += it->m_raw_message_size;
                     }
                     {
