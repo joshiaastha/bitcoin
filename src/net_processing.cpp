@@ -2792,6 +2792,11 @@ void PeerManagerImpl::ProcessMessage(CNode& pfrom, const std::string& msg_type, 
             // Disconnect peers that send a wtxidrelay message after VERACK.
             LogPrint(BCLog::NET, "wtxidrelay received after verack from peer=%d; disconnecting\n", pfrom.GetId());
             pfrom.fDisconnect = true;
+            TRACE3(net, disconnected,
+                pfrom.GetId(),
+                pfrom.m_addr_name.c_str(),
+                pfrom.ConnectionTypeAsString().c_str()
+            );
             return;
         }
         if (pfrom.GetCommonVersion() >= WTXID_RELAY_VERSION) {
@@ -2815,6 +2820,11 @@ void PeerManagerImpl::ProcessMessage(CNode& pfrom, const std::string& msg_type, 
             // Disconnect peers that send a SENDADDRV2 message after VERACK.
             LogPrint(BCLog::NET, "sendaddrv2 received after verack from peer=%d; disconnecting\n", pfrom.GetId());
             pfrom.fDisconnect = true;
+            TRACE3(net, disconnected,
+                pfrom.GetId(),
+                pfrom.m_addr_name.c_str(),
+                pfrom.ConnectionTypeAsString().c_str()
+            );
             return;
         }
         peer->m_wants_addrv2 = true;
