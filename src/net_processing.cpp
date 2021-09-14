@@ -4038,14 +4038,7 @@ bool PeerManagerImpl::ProcessMessages(CNode* pfrom, std::atomic<bool>& interrupt
     bool fMoreWork = false;
 
     PeerRef peer = GetPeerRef(pfrom->GetId());
-    if (peer == nullptr) {
-        TRACE3(net, disconnected,
-                pfrom->GetId(),
-                pfrom->m_addr_name.c_str(),
-                pfrom->ConnectionTypeAsString().c_str()
-            );
-        return false;
-    }
+    if (peer == nullptr) return false;
 
     {
         LOCK(peer->m_getdata_requests_mutex);
@@ -4062,7 +4055,14 @@ bool PeerManagerImpl::ProcessMessages(CNode* pfrom, std::atomic<bool>& interrupt
     }
 
     if (pfrom->fDisconnect)
-        return false;
+        {
+            TRACE3(net, disconnected,
+                pfrom->GetId(),
+                pfrom->m_addr_name.c_str(),
+                pfrom->ConnectionTypeAsString().c_str()
+            );
+            return false;
+        }
 
     // this maintains the order of responses
     // and prevents m_getdata_requests to grow unbounded
