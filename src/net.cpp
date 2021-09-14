@@ -1581,6 +1581,17 @@ void CConnman::SocketHandler()
                     {
                         LOCK(pnode->cs_vProcessMsg);
                         pnode->vProcessMsg.splice(pnode->vProcessMsg.end(), pnode->vRecvMsg, pnode->vRecvMsg.begin(), it);
+                        auto it1(pnode->vProcessMsg.begin());
+                        for (; it1 != pnode->vProcessMsg.end(); ++it1) {
+                            TRACE6(net, transfer_message,
+                                pnode->GetId(),
+                                pnode->m_addr_name.c_str(),
+                                pnode->ConnectionTypeAsString().c_str(),
+                                it1->m_command.c_str(),
+                                it1->m_recv.size(),
+                                it1->m_recv.data()
+                            );     
+                        }
                         pnode->nProcessQueueSize += nSizeAdded;
                         pnode->fPauseRecv = pnode->nProcessQueueSize > nReceiveFloodSize;
                     }
