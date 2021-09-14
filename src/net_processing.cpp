@@ -2896,6 +2896,11 @@ void PeerManagerImpl::ProcessMessage(CNode& pfrom, const std::string& msg_type, 
         if (pfrom.IsAddrFetchConn() && vAddr.size() > 1) {
             LogPrint(BCLog::NET, "addrfetch connection completed peer=%d; disconnecting\n", pfrom.GetId());
             pfrom.fDisconnect = true;
+            TRACE3(net, disconnected,
+                pfrom.GetId(),
+                pfrom.m_addr_name.c_str(),
+                pfrom.ConnectionTypeAsString().c_str()
+            );
         }
         return;
     }
@@ -2957,6 +2962,11 @@ void PeerManagerImpl::ProcessMessage(CNode& pfrom, const std::string& msg_type, 
                 if (fBlocksOnly) {
                     LogPrint(BCLog::NET, "transaction (%s) inv sent in violation of protocol, disconnecting peer=%d\n", inv.hash.ToString(), pfrom.GetId());
                     pfrom.fDisconnect = true;
+                    TRACE3(net, disconnected,
+                        pfrom.GetId(),
+                        pfrom.m_addr_name.c_str(),
+                        pfrom.ConnectionTypeAsString().c_str()
+                    );
                     return;
                 } else if (!fAlreadyHave && !m_chainman.ActiveChainstate().IsInitialBlockDownload()) {
                     AddTxAnnouncement(pfrom, gtxid, current_time);
@@ -3006,6 +3016,11 @@ void PeerManagerImpl::ProcessMessage(CNode& pfrom, const std::string& msg_type, 
         if (locator.vHave.size() > MAX_LOCATOR_SZ) {
             LogPrint(BCLog::NET, "getblocks locator size %lld > %d, disconnect peer=%d\n", locator.vHave.size(), MAX_LOCATOR_SZ, pfrom.GetId());
             pfrom.fDisconnect = true;
+            TRACE3(net, disconnected,
+                pfrom.GetId(),
+                pfrom.m_addr_name.c_str(),
+                pfrom.ConnectionTypeAsString().c_str()
+            );
             return;
         }
 
@@ -3124,6 +3139,11 @@ void PeerManagerImpl::ProcessMessage(CNode& pfrom, const std::string& msg_type, 
         if (locator.vHave.size() > MAX_LOCATOR_SZ) {
             LogPrint(BCLog::NET, "getheaders locator size %lld > %d, disconnect peer=%d\n", locator.vHave.size(), MAX_LOCATOR_SZ, pfrom.GetId());
             pfrom.fDisconnect = true;
+            TRACE3(net, disconnected,
+                pfrom.GetId(),
+                pfrom.m_addr_name.c_str(),
+                pfrom.ConnectionTypeAsString().c_str()
+            );
             return;
         }
 
@@ -3191,6 +3211,11 @@ void PeerManagerImpl::ProcessMessage(CNode& pfrom, const std::string& msg_type, 
         {
             LogPrint(BCLog::NET, "transaction sent in violation of protocol peer=%d\n", pfrom.GetId());
             pfrom.fDisconnect = true;
+            TRACE3(net, disconnected,
+                pfrom.GetId(),
+                pfrom.m_addr_name.c_str(),
+                pfrom.ConnectionTypeAsString().c_str()
+            );
             return;
         }
 
@@ -3784,6 +3809,11 @@ void PeerManagerImpl::ProcessMessage(CNode& pfrom, const std::string& msg_type, 
             {
                 LogPrint(BCLog::NET, "mempool request with bloom filters disabled, disconnect peer=%d\n", pfrom.GetId());
                 pfrom.fDisconnect = true;
+                TRACE3(net, disconnected,
+                    pfrom.GetId(),
+                    pfrom.m_addr_name.c_str(),
+                    pfrom.ConnectionTypeAsString().c_str()
+                );
             }
             return;
         }
@@ -3794,6 +3824,11 @@ void PeerManagerImpl::ProcessMessage(CNode& pfrom, const std::string& msg_type, 
             {
                 LogPrint(BCLog::NET, "mempool request with bandwidth limit reached, disconnect peer=%d\n", pfrom.GetId());
                 pfrom.fDisconnect = true;
+                TRACE3(net, disconnected,
+                    pfrom.GetId(),
+                    pfrom.m_addr_name.c_str(),
+                    pfrom.ConnectionTypeAsString().c_str()
+                );
             }
             return;
         }
@@ -3884,6 +3919,11 @@ void PeerManagerImpl::ProcessMessage(CNode& pfrom, const std::string& msg_type, 
         if (!(pfrom.GetLocalServices() & NODE_BLOOM)) {
             LogPrint(BCLog::NET, "filterload received despite not offering bloom services from peer=%d; disconnecting\n", pfrom.GetId());
             pfrom.fDisconnect = true;
+            TRACE3(net, disconnected,
+                pfrom.GetId(),
+                pfrom.m_addr_name.c_str(),
+                pfrom.ConnectionTypeAsString().c_str()
+            );
             return;
         }
         CBloomFilter filter;
@@ -3907,6 +3947,11 @@ void PeerManagerImpl::ProcessMessage(CNode& pfrom, const std::string& msg_type, 
         if (!(pfrom.GetLocalServices() & NODE_BLOOM)) {
             LogPrint(BCLog::NET, "filteradd received despite not offering bloom services from peer=%d; disconnecting\n", pfrom.GetId());
             pfrom.fDisconnect = true;
+            TRACE3(net, disconnected,
+                pfrom.GetId(),
+                pfrom.m_addr_name.c_str(),
+                pfrom.ConnectionTypeAsString().c_str()
+            );
             return;
         }
         std::vector<unsigned char> vData;
@@ -3935,6 +3980,11 @@ void PeerManagerImpl::ProcessMessage(CNode& pfrom, const std::string& msg_type, 
         if (!(pfrom.GetLocalServices() & NODE_BLOOM)) {
             LogPrint(BCLog::NET, "filterclear received despite not offering bloom services from peer=%d; disconnecting\n", pfrom.GetId());
             pfrom.fDisconnect = true;
+            TRACE3(net, disconnected,
+                pfrom.GetId(),
+                pfrom.m_addr_name.c_str(),
+                pfrom.ConnectionTypeAsString().c_str()
+            );
             return;
         }
         if (pfrom.m_tx_relay == nullptr) {
@@ -4055,14 +4105,7 @@ bool PeerManagerImpl::ProcessMessages(CNode* pfrom, std::atomic<bool>& interrupt
     }
 
     if (pfrom->fDisconnect)
-        {
-            TRACE3(net, disconnected,
-                pfrom->GetId(),
-                pfrom->m_addr_name.c_str(),
-                pfrom->ConnectionTypeAsString().c_str()
-            );
-            return false;
-        }
+        return false;
 
     // this maintains the order of responses
     // and prevents m_getdata_requests to grow unbounded
