@@ -2509,6 +2509,11 @@ void PeerManagerImpl::ProcessMessage(CNode& pfrom, const std::string& msg_type, 
         {
             LogPrint(BCLog::NET, "peer=%d does not offer the expected services (%08x offered, %08x expected); disconnecting\n", pfrom.GetId(), nServices, GetDesirableServiceFlags(nServices));
             pfrom.fDisconnect = true;
+            TRACE3(net, disconnected,
+                pfrom.GetId(),
+                pfrom.m_addr_name.c_str(),
+                pfrom.ConnectionTypeAsString().c_str()
+            );
             return;
         }
 
@@ -2516,6 +2521,11 @@ void PeerManagerImpl::ProcessMessage(CNode& pfrom, const std::string& msg_type, 
             // disconnect from peers older than this proto version
             LogPrint(BCLog::NET, "peer=%d using obsolete version %i; disconnecting\n", pfrom.GetId(), nVersion);
             pfrom.fDisconnect = true;
+            TRACE3(net, disconnected,
+                pfrom.GetId(),
+                pfrom.m_addr_name.c_str(),
+                pfrom.ConnectionTypeAsString().c_str()
+            );
             return;
         }
 
@@ -2542,6 +2552,11 @@ void PeerManagerImpl::ProcessMessage(CNode& pfrom, const std::string& msg_type, 
         {
             LogPrintf("connected to self at %s, disconnecting\n", pfrom.addr.ToString());
             pfrom.fDisconnect = true;
+            TRACE3(net, disconnected,
+                pfrom.GetId(),
+                pfrom.m_addr_name.c_str(),
+                pfrom.ConnectionTypeAsString().c_str()
+            );
             return;
         }
 
@@ -2684,6 +2699,11 @@ void PeerManagerImpl::ProcessMessage(CNode& pfrom, const std::string& msg_type, 
         if (pfrom.IsFeelerConn()) {
             LogPrint(BCLog::NET, "feeler connection completed peer=%d; disconnecting\n", pfrom.GetId());
             pfrom.fDisconnect = true;
+            TRACE3(net, disconnected,
+                pfrom.GetId(),
+                pfrom.m_addr_name.c_str(),
+                pfrom.ConnectionTypeAsString().c_str()
+            );
         }
         return;
     }
