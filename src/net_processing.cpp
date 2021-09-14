@@ -2509,11 +2509,6 @@ void PeerManagerImpl::ProcessMessage(CNode& pfrom, const std::string& msg_type, 
         {
             LogPrint(BCLog::NET, "peer=%d does not offer the expected services (%08x offered, %08x expected); disconnecting\n", pfrom.GetId(), nServices, GetDesirableServiceFlags(nServices));
             pfrom.fDisconnect = true;
-            TRACE3(net, disconnected,
-                pfrom.GetId(),
-                pfrom.m_addr_name.c_str(),
-                pfrom.ConnectionTypeAsString().c_str()
-            );
             return;
         }
 
@@ -2521,13 +2516,6 @@ void PeerManagerImpl::ProcessMessage(CNode& pfrom, const std::string& msg_type, 
             // disconnect from peers older than this proto version
             LogPrint(BCLog::NET, "peer=%d using obsolete version %i; disconnecting\n", pfrom.GetId(), nVersion);
             pfrom.fDisconnect = true;
-
-            TRACE3(net, disconnected,
-                pfrom.GetId(),
-                pfrom.m_addr_name.c_str(),
-                pfrom.ConnectionTypeAsString().c_str()
-            );
-
             return;
         }
 
@@ -2554,11 +2542,6 @@ void PeerManagerImpl::ProcessMessage(CNode& pfrom, const std::string& msg_type, 
         {
             LogPrintf("connected to self at %s, disconnecting\n", pfrom.addr.ToString());
             pfrom.fDisconnect = true;
-            TRACE3(net, disconnected,
-                pfrom.GetId(),
-                pfrom.m_addr_name.c_str(),
-                pfrom.ConnectionTypeAsString().c_str()
-            );
             return;
         }
 
@@ -2701,11 +2684,6 @@ void PeerManagerImpl::ProcessMessage(CNode& pfrom, const std::string& msg_type, 
         if (pfrom.IsFeelerConn()) {
             LogPrint(BCLog::NET, "feeler connection completed peer=%d; disconnecting\n", pfrom.GetId());
             pfrom.fDisconnect = true;
-            TRACE3(net, disconnected,
-                pfrom.GetId(),
-                pfrom.m_addr_name.c_str(),
-                pfrom.ConnectionTypeAsString().c_str()
-            );
         }
         return;
     }
@@ -2792,11 +2770,6 @@ void PeerManagerImpl::ProcessMessage(CNode& pfrom, const std::string& msg_type, 
             // Disconnect peers that send a wtxidrelay message after VERACK.
             LogPrint(BCLog::NET, "wtxidrelay received after verack from peer=%d; disconnecting\n", pfrom.GetId());
             pfrom.fDisconnect = true;
-            TRACE3(net, disconnected,
-                pfrom.GetId(),
-                pfrom.m_addr_name.c_str(),
-                pfrom.ConnectionTypeAsString().c_str()
-            );
             return;
         }
         if (pfrom.GetCommonVersion() >= WTXID_RELAY_VERSION) {
@@ -2820,11 +2793,6 @@ void PeerManagerImpl::ProcessMessage(CNode& pfrom, const std::string& msg_type, 
             // Disconnect peers that send a SENDADDRV2 message after VERACK.
             LogPrint(BCLog::NET, "sendaddrv2 received after verack from peer=%d; disconnecting\n", pfrom.GetId());
             pfrom.fDisconnect = true;
-            TRACE3(net, disconnected,
-                pfrom.GetId(),
-                pfrom.m_addr_name.c_str(),
-                pfrom.ConnectionTypeAsString().c_str()
-            );
             return;
         }
         peer->m_wants_addrv2 = true;
@@ -4137,7 +4105,14 @@ bool PeerManagerImpl::ProcessMessages(CNode* pfrom, std::atomic<bool>& interrupt
 
     try {
         ProcessMessage(*pfrom, msg_type, msg.m_recv, msg.m_time, interruptMsgProc);
-        if (interruptMsgProc) return false;
+        if (interruptMsgProc) {
+            TRACE3(net, disconnected,
+                pfrom->GetId(),
+                pfrom->m_addr_name.c_str(),
+                pfrom->ConnectionTypeAsString().c_str()
+            );
+            return false;
+        } 
         {
             LOCK(peer->m_getdata_requests_mutex);
             if (!peer->m_getdata_requests.empty()) fMoreWork = true;
